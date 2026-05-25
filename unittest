@@ -1,0 +1,222 @@
+package com.mycompany.loginsystem;
+
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+
+public class LoginSystemTest {
+
+    @BeforeAll
+    public static void setUpClass() throws Exception {
+    }
+
+    @AfterAll
+    public static void tearDownClass() throws Exception {
+    }
+
+    @BeforeEach
+    public void setUp() throws Exception {
+    }
+
+    @AfterEach
+    public void tearDown() throws Exception {
+    }
+
+    // ---------------- USERNAME TESTS ----------------
+    @Test
+    public void testCheckUserName_Valid() {
+        assertTrue(LoginSystem.checkUserName("kyl_1"));
+    }
+
+    @Test
+    public void testCheckUserName_Invalid_NoUnderscore() {
+        assertFalse(LoginSystem.checkUserName("kyle1"));
+    }
+
+    @Test
+    public void testCheckUserName_Invalid_TooLong() {
+        assertFalse(LoginSystem.checkUserName("user_name"));
+    }
+
+    // ---------------- PASSWORD TESTS ----------------
+    @Test
+    public void testCheckPassword_Valid() {
+        assertTrue(LoginSystem.checkPassword("CH&&scc@ke99!"));
+    }
+
+    @Test
+    public void testCheckPassword_Invalid() {
+        assertFalse(LoginSystem.checkPassword("password"));
+    }
+
+    // ---------------- LOGIN TESTS ----------------
+    @Test
+    public void testLogin_Success() {
+        assertTrue(LoginSystem.login(
+                "user1",
+                "Pass@123",
+                "user1",
+                "Pass@123"
+        ));
+    }
+
+    @Test
+    public void testLogin_Fail() {
+        assertFalse(LoginSystem.login(
+                "user1",
+                "wrong",
+                "user1",
+                "Pass@123"
+        ));
+    }
+
+    // ---------------- PHONE VALIDATION ----------------
+    @Test
+    public void testValidateNumber_Valid() {
+        assertEquals("Valid", LoginSystem.validateNumber("+27838968976"));
+    }
+
+    @Test
+    public void testValidateNumber_InvalidPrefix() {
+        assertEquals("Invalid: must start with +27",
+                LoginSystem.validateNumber("0712345678"));
+    }
+
+    @Test
+    public void testValidateNumber_InvalidLength() {
+        assertEquals("Invalid: must be 12 digits (+27XXXXXXXXX)",
+                LoginSystem.validateNumber("+271234"));
+    }
+
+    // ---------------- MESSAGE HASH TEST ----------------
+    @Test
+    public void testCreateMessageHash_Basic() {
+        String result = LoginSystem.createMessageHash("AB12345678", 1, "Hello world");
+
+        assertTrue(result.startsWith("AB:1:HELLOWORLD"));
+    }
+
+    // ---------------- SHOW MESSAGES ----------------
+    @Test
+    public void testShowMessages_DoesNotCrash() {
+        assertDoesNotThrow(() -> LoginSystem.showMessages());
+    }
+
+    // ---------------- STORE MESSAGE ----------------
+    @Test
+    public void testStoreMessage_DoesNotCrash() {
+        assertDoesNotThrow(() -> LoginSystem.storeMessage());
+    }
+
+    /**
+     * Test of checkUserName method, of class LoginSystem.
+     */
+    @Test
+    public void testCheckUserName() {
+        System.out.println("checkUserName");
+        String u = "";
+        boolean expResult = false;
+        boolean result = LoginSystem.checkUserName(u);
+        assertEquals(expResult, result);
+        // TODO review the generated test code and remove the default call to fail.
+        fail("The test case is a prototype.");
+    }
+
+    /**
+     * Test of checkPassword method, of class LoginSystem.
+     */
+    @Test
+    public void testCheckPassword() {
+        System.out.println("checkPassword");
+        String p = "";
+        boolean expResult = false;
+        boolean result = LoginSystem.checkPassword(p);
+        assertEquals(expResult, result);
+        // TODO review the generated test code and remove the default call to fail.
+        fail("The test case is a prototype.");
+    }
+
+    /**
+     * Test of login method, of class LoginSystem.
+     */
+    @Test
+    public void testLogin() {
+        System.out.println("login");
+        String u = "";
+        String p = "";
+        String su = "";
+        String sp = "";
+        boolean expResult = false;
+        boolean result = LoginSystem.login(u, p, su, sp);
+        assertEquals(expResult, result);
+        // TODO review the generated test code and remove the default call to fail.
+        fail("The test case is a prototype.");
+    }
+
+    /**
+     * Test of validateNumber method, of class LoginSystem.
+     */
+    @Test
+    public void testValidateNumber() {
+        System.out.println("validateNumber");
+        String num = "";
+        String expResult = "";
+        String result = LoginSystem.validateNumber(num);
+        assertEquals(expResult, result);
+        // TODO review the generated test code and remove the default call to fail.
+        fail("The test case is a prototype.");
+    }
+
+    /**
+     * Test of createMessageHash method, of class LoginSystem.
+     */
+    @Test
+    public void testCreateMessageHash() {
+        System.out.println("createMessageHash");
+        String id = "";
+        int num = 0;
+        String msg = "";
+        String expResult = "";
+        String result = LoginSystem.createMessageHash(id, num, msg);
+        assertEquals(expResult, result);
+        // TODO review the generated test code and remove the default call to fail.
+        fail("The test case is a prototype.");
+    }
+
+    /**
+     * Test of storeMessage method, of class LoginSystem.
+     */
+    @Test
+    public void testStoreMessage() {
+        System.out.println("storeMessage");
+        LoginSystem.storeMessage();
+        // TODO review the generated test code and remove the default call to fail.
+        fail("The test case is a prototype.");
+    }
+
+    /**
+     * Test of showMessages method, of class LoginSystem.
+     */
+    @Test
+    public void testShowMessages() {
+        System.out.println("showMessages");
+        LoginSystem.showMessages();
+        // TODO review the generated test code and remove the default call to fail.
+        fail("The test case is a prototype.");
+    }
+
+    /**
+     * Test of main method, of class LoginSystem.
+     */
+    @Test
+    public void testMain() {
+        System.out.println("main");
+        String[] args = null;
+        LoginSystem.main(args);
+        // TODO review the generated test code and remove the default call to fail.
+        fail("The test case is a prototype.");
+    }
+}
