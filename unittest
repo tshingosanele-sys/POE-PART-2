@@ -1,11 +1,11 @@
-package com.mycompany.loginsystem;
+package com.mycompany.loginsystem; 
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeEach; 
 
 public class LoginSystemTest {
 
@@ -30,7 +30,7 @@ public class LoginSystemTest {
     public void testCheckUserName_Valid() {
         assertTrue(LoginSystem.checkUserName("kyl_1"));
     }
-
+    
     @Test
     public void testCheckUserName_Invalid_NoUnderscore() {
         assertFalse(LoginSystem.checkUserName("kyle1"));
