@@ -1,552 +1,361 @@
 package com.mycompany.loginsystem;
 
-import java.util.*;
-import java.text.SimpleDateFormat;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.util.regex.Pattern;
+import java.util.*; // import utilities
+import java.text.SimpleDateFormat; // import date format
+import java.io.FileWriter; // import file writer
+import java.io.IOException; // import IO error handling
+import java.util.regex.Pattern; // import regex
 
-public class LoginSystem {
+public class LoginSystem { // UPDATED CLASS NAME
 
-// ---------------- STORAGE ----------------
-static ArrayList<String> ids = new ArrayList<>();
-static ArrayList<String> messages = new ArrayList<>();
-static ArrayList<String> recipients = new ArrayList<>();
-static ArrayList<String> timestamps = new ArrayList<>();
-static ArrayList<String> hashes = new ArrayList<>();
-static ArrayList<String> statusList = new ArrayList<>();
+// ---------------- STORAGE ----------------  
+static ArrayList<String> ids = new ArrayList<>(); // store message ids  
+static ArrayList<String> messages = new ArrayList<>(); // store messages  
+static ArrayList<String> recipients = new ArrayList<>(); // store numbers  
+static ArrayList<String> timestamps = new ArrayList<>(); // store time  
+static ArrayList<String> hashes = new ArrayList<>(); // store hashes  
+static ArrayList<String> statusList = new ArrayList<>(); // store status  
 
-static int sentCount = 0;
-static int messageLimit = 0;
+static int sentCount = 0; // count messages sent  
+static int messageLimit = 0; // max messages allowed  
 
-static Scanner input = new Scanner(System.in);
+static Scanner input = new Scanner(System.in); // read input  
 
-// ---------------- USERNAME VALIDATION ----------------
-public static boolean checkUserName(String u) {
+// ---------------- VALIDATION ----------------  
+public static boolean checkUserName(String u) { // check username  
+    return u.contains("_") && u.length() <= 5; // must have _ and <=5  
+}  
 
-return u.contains("_") && u.length() <= 5;
+public static boolean checkPassword(String p) { // check password  
+    return Pattern.matches("^(?=.*[A-Z])(?=.*\\d)(?=.*[@#$%^&+=!]).{8,}$", p); // rules  
+}  
+
+public static boolean login(String u, String p, String su, String sp) { // login check  
+    return u.equals(su) && p.equals(sp); // compare input with saved  
+}  
+
+public static String validateNumber(String num) { // check phone number  
+
+    if (num == null) return "Invalid"; // null check  
+
+    if (!num.startsWith("+27")) // must start +27  
+        return "Invalid: must start with +27";  
+
+    if (num.length() != 12) // must be 12 chars  
+        return "Invalid: must be 12 digits (+27XXXXXXXXX)";  
+
+    if (!num.substring(3).matches("\\d{9}")) // rest must be digits  
+        return "Invalid: only digits allowed after +27";  
+
+    return "Valid"; // correct number  
+}  
+
+public static String createMessageHash(String id, int num, String msg) { // make hash  
+
+    String[] words = msg.trim().split(" "); // split message  
+
+    String first = words.length > 0 ? words[0] : "MSG"; // first word  
+    String last = words.length > 1 ? words[words.length - 1] : words[0]; // last word  
+
+    return (id.substring(0, 2) + ":" + num + ":" + first + last).toUpperCase(); // build hash  
+}  
+
+// ---------------- SAVE FILE ----------------  
+public static void storeMessage() { // save messages  
+
+    try {  
+        FileWriter file = new FileWriter("messages.json"); // create file  
+
+        file.write("[\n"); // start json array  
+
+        for (int i = 0; i < messages.size(); i++) { // loop messages  
+
+            file.write("  {\n"); // start object  
+            file.write("    \"id\": \"" + ids.get(i) + "\",\n"); // write id  
+            file.write("    \"hash\": \"" + hashes.get(i) + "\",\n"); // write hash  
+            file.write("    \"recipient\": \"" + recipients.get(i) + "\",\n"); // write number  
+            file.write("    \"message\": \"" + messages.get(i) + "\",\n"); // write message  
+            file.write("    \"status\": \"" + statusList.get(i) + "\",\n"); // write status  
+            file.write("    \"time\": \"" + timestamps.get(i) + "\"\n"); // write time  
+            file.write("  }"); // end object  
+
+            if (i < messages.size() - 1) file.write(","); // add comma  
+            file.write("\n"); // new line  
+        }  
+
+        file.write("]"); // end json array  
+        file.close(); // close file  
+
+        System.out.println("\n[SYSTEM] File saved successfully!"); // success msg  
+        System.out.println("[SYSTEM] Total records saved: " + messages.size()); // count  
+
+    } catch (IOException e) { // catch error  
+        System.out.println("[ERROR] Failed to save file!"); // error msg  
+    }  
+}  
+
+// ---------------- SHOW MESSAGES ----------------  
+public static void showMessages() { // display messages  
+
+    System.out.println("\n=============================="); // line  
+    System.out.println("      SHOW MESSAGES"); // title  
+    System.out.println("=============================="); // line  
+
+    for (int i = 0; i < messages.size(); i++) { // loop messages
+        System.out.println("ID: " + ids.get(i) + ", Recipient: " + recipients.get(i) + ", Message: " + messages.get(i));
+    }
+
+    System.out.println("==============================\n"); // end  
+}  
+
+// ---------------- LONGEST MESSAGE ----------------  
+public static void showLongestMessage() { // display the longest message
+
+    String longestMessage = "";
+    for (String message : messages) {
+        if (message.length() > longestMessage.length()) {
+            longestMessage = message;
+        }
+    }
+    System.out.println("Longest Message: " + longestMessage);
 }
 
-// ---------------- PASSWORD VALIDATION ----------------
-public static boolean checkPassword(String p) {
+// ---------------- SEARCH BY ID ----------------  
+public static void searchById(String id) { // search for a message by ID
 
-return Pattern.matches(
-"^(?=.*[A-Z])(?=.*\\d)(?=.*[@#$%^&+=!]).{8,}$",
-p
-);
+    int index = ids.indexOf(id);
+    if (index != -1) {
+        System.out.println("Found: Recipient: " + recipients.get(index) + ", Message: " + messages.get(index));
+    } else {
+        System.out.println("No message found with ID: " + id);
+    }
 }
 
-// ---------------- LOGIN ----------------
-public static boolean login(
-String u,
-String p,
-String su,
-String sp
-) {
+// ---------------- SEARCH BY RECIPIENT ----------------  
+public static void searchByRecipient(String recipient) { // search messages by recipient
 
-return u.equals(su) && p.equals(sp);
+    System.out.println("Messages for recipient " + recipient + ":");
+    boolean found = false;
+    for (int i = 0; i < recipients.size(); i++) {
+        if (recipients.get(i).equals(recipient)) {
+            System.out.println("ID: " + ids.get(i) + ", Message: " + messages.get(i));
+            found = true;
+        }
+    }
+    if (!found) {
+        System.out.println("No messages found for this recipient.");
+    }
 }
 
-// ---------------- PHONE VALIDATION ----------------
-public static String validateNumber(String num) {
+// ---------------- DELETE BY HASH ----------------  
+public static void deleteByHash(String hash) { // delete a message using its hash
 
-if (num == null) {
-return "Invalid";
+    int index = hashes.indexOf(hash);
+    if (index != -1) {
+        System.out.println("Deleting message: " + messages.get(index));
+        ids.remove(index);
+        hashes.remove(index);
+        recipients.remove(index);
+        messages.remove(index);
+        timestamps.remove(index);
+        statusList.remove(index);
+        sentCount--;
+        System.out.println("Message deleted.");
+    } else {
+        System.out.println("No message found with hash: " + hash);
+    }
 }
 
-if (!num.startsWith("+27")) {
-return "Invalid: must start with +27";
+// ---------------- DISPLAY REPORT ----------------  
+public static void displayReport() { // display a report of all messages
+
+    System.out.println("\n==============================");
+    System.out.println("         MESSAGE REPORT");
+    System.out.println("==============================");
+    for (int i = 0; i < messages.size(); i++) {
+        System.out.println("ID: " + ids.get(i) + ", Hash: " + hashes.get(i) + ", Recipient: " + recipients.get(i) + ", Message: " + messages.get(i) + ", Status: " + statusList.get(i) + ", Time: " + timestamps.get(i));
+    }
+    System.out.println("==============================\n");
 }
 
-if (num.length() != 12) {
-return "Invalid: must be 12 digits (+27XXXXXXXXX)";
-}
-
-if (!num.substring(3).matches("\\d{9}")) {
-return "Invalid: only digits allowed after +27";
-}
-
-return "Valid";
-}
-
-// ---------------- HASH ----------------
-public static String createMessageHash(
-String id,
-int num,
-String msg
-) {
-
-String[] words = msg.trim().split("\\s+");
-
-String first =
-words.length > 0 ? words[0] : "MSG";
-
-String last =
-words.length > 1
-? words[words.length - 1]
-: words[0];
-
-return (
-id.substring(0, 2)
-+ ":"
-+ num
-+ ":"
-+ first
-+ last
-).toUpperCase();
-}
-
-// ---------------- SAVE FILE ----------------
-public static void storeMessage() {
+// ---------------- MAIN ----------------  
+public static void main(String[] args) { // program start  
 
-try {
-
-FileWriter file =
-new FileWriter("messages.json");
-
-file.write("[\n");
+    System.out.println("=== QUICKCHAT CONSOLE ==="); // title  
 
-for (int i = 0; i < messages.size(); i++) {
-
-file.write(" {\n");
+    // ---------------- REGISTRATION ----------------  
+    System.out.print("Create Username: "); // ask username  
+    String su = input.nextLine(); // read username  
 
-file.write(
-" \"id\": \""
-+ ids.get(i)
-+ "\",\n"
-);
+    System.out.print("Create Password: "); // ask password  
+    String sp = input.nextLine(); // read password  
 
-file.write(
-" \"hash\": \""
-+ hashes.get(i)
-+ "\",\n"
-);
+    if (!checkUserName(su) || !checkPassword(sp)) { // validate  
+        System.out.println("Invalid registration!"); // fail msg  
+        return; // stop program  
+    }  
 
-file.write(
-" \"recipient\": \""
-+ recipients.get(i)
-+ "\",\n"
-);
+    // ---------------- LOGIN ----------------  
+    boolean logged = false; // login flag  
 
-file.write(
-" \"message\": \""
-+ messages.get(i)
-+ "\",\n"
-);
+    while (!logged) { // loop until correct  
 
-file.write(
-" \"status\": \""
-+ statusList.get(i)
-+ "\",\n"
-);
+        System.out.print("Login Username: "); // ask user  
+        String u = input.nextLine(); // read user  
 
-file.write(
-" \"time\": \""
-+ timestamps.get(i)
-+ "\"\n"
-);
+        System.out.print("Login Password: "); // ask pass  
+        String p = input.nextLine(); // read pass  
 
-file.write(" }");
+        logged = login(u, p, su, sp); // check login  
 
-if (i < messages.size() - 1) {
-file.write(",");
-}
+        if (!logged)  
+            System.out.println("Login failed!"); // wrong details  
+    }  
 
-file.write("\n");
-}
+    System.out.println("Welcome to QuickChat"); // success msg  
 
-file.write("]");
+    // ---------------- LIMIT ----------------  
+    System.out.print("How many messages do you want to send? "); // ask limit  
+    messageLimit = Integer.parseInt(input.nextLine()); // read limit  
 
-file.close();
+    // ---------------- MENU ----------------  
+    while (true) { // infinite loop  
 
-System.out.println(
-"\n[SYSTEM] File saved successfully!"
-);
+        System.out.println("\n========== MENU =========="); // menu  
+        System.out.println("1. Send Message"); // option 1  
+        System.out.println("2. Show Messages"); // option 2  
+        System.out.println("3. Show Longest Message"); // option 3  
+        System.out.println("4. Search Message by ID"); // option 4  
+        System.out.println("5. Search Messages by Recipient"); // option 5  
+        System.out.println("6. Delete Message by Hash"); // option 6  
+        System.out.println("7. Display Report"); // option 7  
+        System.out.println("8. Discard Last Message"); // option 8  
+        System.out.println("9. Save Messages"); // option 9  
+        System.out.println("10. Quit"); // option 10  
+        System.out.println("=========================="); // end menu  
 
-System.out.println(
-"[SYSTEM] Total records saved: "
-+ messages.size()
-);
+        System.out.print("Choose option: "); // ask choice  
+        String choice = input.nextLine(); // read choice  
 
-} catch (IOException e) {
+        switch (choice) {  
 
-System.out.println(
-"[ERROR] Failed to save file!"
-);
-}
-}
+            case "1":  
 
-// ---------------- SHOW MESSAGES ----------------
-public static void showMessages() {
+                if (sentCount >= messageLimit) {  
+                    System.out.println("[WARNING] Message limit reached!");  
+                    break;  
+                }  
 
-System.out.println("\n==============================");
-System.out.println(" SHOW MESSAGES");
-System.out.println("==============================");
+                System.out.print("Enter Recipient (+27XXXXXXXXX): ");  
+                String rec = input.nextLine();  
 
-System.out.println(
-"[COMING SOON] This feature is under development."
-);
+                String validation = validateNumber(rec);  
+                if (!validation.equals("Valid")) {  
+                    System.out.println("[ERROR] " + validation);  
+                    break;  
+                }  
 
-System.out.println(
-"Please check back later."
-);
+                System.out.print("Enter Message (max 250 chars): ");  
+                String msg = input.nextLine();  
 
-System.out.println("==============================\n");
-}
+                if (msg.length() > 250) {  
+                    System.out.println("[ERROR] Message too long!");  
+                    break;  
+                }  
 
-// ---------------- MAIN ----------------
-public static void main(String[] args) {
+                String id = String.format("%010d",  
+                        (long) (Math.random() * 10000000000L));  
 
-System.out.println(
-"=== QUICKCHAT CONSOLE ==="
-);
+                String hash = createMessageHash(id, sentCount, msg);  
 
-// ---------------- REGISTRATION ----------------
-String su;
-String sp;
+                ids.add(id);  
+                hashes.add(hash);  
+                recipients.add(rec);  
+                messages.add(msg);  
+                timestamps.add(new SimpleDateFormat("HH:mm:ss").format(new Date()));  
+                statusList.add("SENT");  
 
-// USERNAME LOOP
-while (true) {
+                sentCount++;  
 
-System.out.print(
-"Create Username: "
-);
-
-su = input.nextLine();
-
-if (checkUserName(su)) {
-
-System.out.println(
-"[SUCCESS] Username accepted."
-);
-
-break;
-}
-
-System.out.println(
-"[ERROR] Username must contain '_' and be 5 characters or less."
-);
-}
-
-// PASSWORD LOOP
-while (true) {
-
-System.out.print(
-"Create Password: "
-);
-
-sp = input.nextLine();
-
-if (checkPassword(sp)) {
-
-System.out.println(
-"[SUCCESS] Password accepted."
-);
-
-break;
-}
-
-System.out.println(
-"[ERROR] Password must contain:"
-);
-
-System.out.println("- 8+ characters");
-System.out.println("- 1 capital letter");
-System.out.println("- 1 number");
-System.out.println("- 1 special character");
-}
-
-// ---------------- LOGIN ----------------
-boolean logged = false;
-
-while (!logged) {
-
-System.out.print(
-"Login Username: "
-);
-
-String u = input.nextLine();
-
-System.out.print(
-"Login Password: "
-);
-
-String p = input.nextLine();
-
-logged = login(u, p, su, sp);
-
-if (!logged) {
-
-System.out.println(
-"[ERROR] Incorrect username or password."
-);
-
-System.out.println(
-"Please try again.\n"
-);
-
-} else {
-
-System.out.println(
-"[SUCCESS] Login successful!"
-);
-}
-}
-
-System.out.println(
-"\nWelcome to QuickChat"
-);
-
-// ---------------- MESSAGE LIMIT LOOP ----------------
-while (true) {
-
-try {
-
-System.out.print(
-"How many messages do you want to send? "
-);
-
-messageLimit =
-Integer.parseInt(
-input.nextLine()
-);
-
-if (messageLimit <= 0) {
-
-System.out.println(
-"[ERROR] Enter a number greater than 0."
-);
-
-continue;
-}
-
-break;
-
-} catch (NumberFormatException e) {
-
-System.out.println(
-"[ERROR] Numbers only."
-);
-}
-}
-
-// ---------------- MENU ----------------
-while (true) {
-
-System.out.println(
-"\n========== MENU =========="
-);
-
-System.out.println(
-"1. Send Message"
-);
-
-System.out.println(
-"2. Show Messages"
-);
-
-System.out.println(
-"3. Discard Last Message"
-);
-
-System.out.println(
-"4. Save Messages"
-);
-
-System.out.println(
-"5. Quit"
-);
-
-System.out.println(
-"=========================="
-);
-
-System.out.print(
-"Choose option: "
-);
-
-String choice =
-input.nextLine();
-
-switch (choice) {
-
-case "1":
-
-if (sentCount >= messageLimit) {
-
-System.out.println(
-"[WARNING] Message limit reached!"
-);
-
-break;
-}
-
-String rec;
-
-// RECIPIENT LOOP
-while (true) {
-
-System.out.print(
-"Enter Recipient (+27XXXXXXXXX): "
-);
-
-rec = input.nextLine();
-
-String validation =
-validateNumber(rec);
-
-if (validation.equals("Valid")) {
-break;
-}
-
-System.out.println(
-"[ERROR] " + validation
-);
-}
-
-String msg;
-
-// MESSAGE LOOP
-while (true) {
-
-System.out.print(
-"Enter Message (max 250 chars): "
-);
-
-msg = input.nextLine();
-
-if (msg.length() <= 250) {
-break;
-}
-
-System.out.println(
-"[ERROR] Message too long!"
-);
-}
-
-String id =
-String.format(
-"%010d",
-(long)
-(Math.random()
-* 10000000000L)
-);
-
-String hash =
-createMessageHash(
-id,
-sentCount,
-msg
-);
-
-ids.add(id);
-hashes.add(hash);
-recipients.add(rec);
-messages.add(msg);
-
-timestamps.add(
-new SimpleDateFormat(
-"HH:mm:ss"
-).format(new Date())
-);
-
-statusList.add("SENT");
-
-sentCount++;
-
-System.out.println(
-"\n[SUCCESS] MESSAGE SENT"
-);
-
-System.out.println(
-"ID : " + id
-);
-
-System.out.println(
-"HASH : " + hash
-);
-
-break;
-
-case "2":
-
-showMessages();
-break;
-
-case "3":
-
-if (messages.isEmpty()) {
-
-System.out.println(
-"[INFO] No messages to discard."
-);
-
-break;
-}
-
-int last =
-messages.size() - 1;
-
-System.out.println(
-"[SYSTEM] Discarding last message..."
-);
-
-System.out.println(
-"Removed: "
-+ messages.get(last)
-);
-
-ids.remove(last);
-hashes.remove(last);
-recipients.remove(last);
-messages.remove(last);
-timestamps.remove(last);
-statusList.remove(last);
-
-sentCount--;
-
-System.out.println(
-"[SUCCESS] Message discarded."
-);
-
-break;
-
-case "4":
-
-storeMessage();
-break;
-
-case "5":
-
-System.out.print(
-"Save before exit? (yes/no): "
-);
-
-String save =
-input.nextLine();
-
-if (save.equalsIgnoreCase("yes")) {
-
-storeMessage();
-}
-
-System.out.println(
-"Total messages sent: "
-+ sentCount
-);
-
-System.out.println(
-"Goodbye!"
-);
-
-return;
-
-default:
-
-System.out.println(
-"[ERROR] Invalid option! Try again."
-);
-}
-}
+                System.out.println("\n[SUCCESS] MESSAGE SENT");  
+                System.out.println("ID   : " + id);  
+                System.out.println("HASH : " + hash);  
+
+                break;  
+
+            case "2":  
+                showMessages();  
+                break;  
+
+            case "3":  
+                showLongestMessage();  
+                break;
+
+            case "4":
+                System.out.print("Enter Message ID: ");
+                String searchId = input.nextLine();
+                searchById(searchId);
+                break;
+
+            case "5":
+                System.out.print("Enter Recipient: ");
+                String searchRecipient = input.nextLine();
+                searchByRecipient(searchRecipient);
+                break;
+
+            case "6":
+                System.out.print("Enter Message Hash to Delete: ");
+                String deleteHash = input.nextLine();
+                deleteByHash(deleteHash);
+                break;
+
+            case "7":
+                displayReport();
+                break;
+
+            case "8":  
+                if (messages.isEmpty()) {  
+                    System.out.println("[INFO] No messages to discard.");  
+                    break;  
+                }  
+
+                int last = messages.size() - 1;  
+
+                System.out.println("[SYSTEM] Discarding last message...");  
+                System.out.println("Removed: " + messages.get(last));  
+
+                ids.remove(last);  
+                hashes.remove(last);  
+                recipients.remove(last);  
+                messages.remove(last);  
+                timestamps.remove(last);  
+                statusList.remove(last);  
+
+                sentCount--;  
+
+                System.out.println("[SUCCESS] Message discarded.");  
+                break;  
+
+            case "9":  
+                storeMessage();  
+                break;  
+
+            case "10":  
+
+                System.out.print("Save before exit? (yes/no): ");  
+                String save = input.nextLine();  
+
+                if (save.equalsIgnoreCase("yes")) {  
+                    storeMessage();  
+                }  
+
+                System.out.println("Total messages sent: " + sentCount);  
+                System.out.println("Goodbye!");  
+                return;  
+
+            default:  
+                System.out.println("[ERROR] Invalid option!");  
+        }  
+    }  
 }
 }
